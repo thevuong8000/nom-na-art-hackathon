@@ -28,6 +28,13 @@ def getWord(arr):
 	cv2.imwrite("res.png", img);
 	if cv2.waitKey(1) == ord('q'):
 		cv2.destroyAllWindows()
+
+def addWord(knowledge):
+	newWord = random.choice(data)
+	while newWord in knowledge:
+		newWord = random.choice(data)
+	knowledge.append(newWord)
+	getWord(knowledge)
 	
 def getQuestion(knowledge):
 	ans = random.choice(knowledge)
@@ -45,13 +52,19 @@ def getQuestion(knowledge):
 	draw.text((50, 50), "What does " + ans['text'] + " mean in English?", font = font, fill = (b, g, r, a))
 	for i in range(len(arr)):
 		arr[i] = translator.translate(arr[i], dest='en').text
+
+	ans_position = random.randint(0, 3)
+	arr[0], arr[ans_position] = arr[ans_position], arr[0]
 	draw.text((50, 100), "A. " + arr[0], font = font, fill = (b, g, r, a))
 	draw.text((50, 150), "B. " + arr[1], font = font, fill = (b, g, r, a))
 	draw.text((50, 200), "C. " + arr[2], font = font, fill = (b, g, r, a))
 	draw.text((50, 250), "D. " + arr[3], font = font, fill = (b, g, r, a))
+
+	draw.text((50, 300), "* Press X to open dictionary!!!", font = font, fill = (b, g, r, a))
 	img = np.array(img_pil)
 	## Display 
 	cv2.imwrite("ques.png", img);
+	return ans_position
 	# if cv2.waitKey(1) == ord('q'):
 		# cv2.destroyAllWindows()
 

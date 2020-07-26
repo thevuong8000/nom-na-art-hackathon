@@ -36,7 +36,7 @@ lead_image = pygame.transform.flip(lead_image, True, False)
 dictionary = pygame.transform.scale(pygame.image.load(os.path.join("../images","dictionary.png")).convert_alpha(), (64, 64))
 dictframe = pygame.transform.scale(pygame.image.load(os.path.join("../images","dictframe.jpg")).convert_alpha(), (500, 500))
 police_image = pygame.transform.scale(pygame.image.load(os.path.join("../images","police.png")).convert_alpha(), (80, 80))
-
+MrKien_image = pygame.transform.scale(pygame.image.load(os.path.join("../images","ong_do.png")).convert_alpha(), (80, 80))
 
 # set caption and icon
 pygame.display.set_caption("PikaLong adventure")
@@ -125,13 +125,12 @@ class Police(Obj):
 			return False;
 		x = self.X + 40
 		y = self.Y + 40
-		pygame.draw.circle(screen, (0, 0, 0), (self.X, self.Y), 50)
+		# pygame.draw.circle(screen, (0, 0, 0), (self.X, self.Y), 50)
 		pikaX = int(PikaLong.X + 64)
 		pikaY = int(PikaLong.Y + 50)
-		pygame.draw.circle(screen, (0, 0, 0), (pikaX, pikaY), 50)
+		# pygame.draw.circle(screen, (0, 0, 0), (pikaX, pikaY), 50)
 		distance = math.sqrt( ((x - pikaX)**2) + ((y - pikaY)**2) )
 		return distance <= 60
-
 
 class Base:
 	VEL = 2
@@ -156,11 +155,37 @@ class Base:
 		screen.blit(self.IMG, (self.x1, self.y))
 		screen.blit(self.IMG, (self.x2, self.y))
 
+class ProfHanNom(Obj):
+	def __init__(self, Img, x, y):
+		super().__init__(Img, x, y)
+		self.startTime = time.time()
+		self.delay = random.random() * 5 + 10
+		self.finish = False
+		self.VEL = 2
+
+	def move(self):
+		if time.time() - self.startTime >= self.delay:
+			self.X -= self.VEL 
+			if self.X < -200:
+				self.finish = True
+
+	def collide(self, PikaLong):
+		if self.finish:
+			return False;
+		x = self.X + 40
+		y = self.Y + 40
+		# pygame.draw.circle(screen, (0, 0, 0), (self.X, self.Y), 50)
+		pikaX = int(PikaLong.X + 64)
+		pikaY = int(PikaLong.Y + 50)
+		# pygame.draw.circle(screen, (0, 0, 0), (pikaX, pikaY), 50)
+		distance = math.sqrt( ((x - pikaX)**2) + ((y - pikaY)**2) )
+		return distance <= 60
+
 def AskQuestion():
-	god.getQuestion(knowledge)
+	pos = god.getQuestion(knowledge)
 	question = pygame.transform.scale(pygame.image.load(os.path.join("./","ques.png")).convert_alpha(), (512, 512))
 	# screen.blit(question, (200, 200))
-	return question
+	return (question, pos)
 	
 
 def QuitGame():
@@ -169,14 +194,41 @@ def QuitGame():
 
 data = god.data
 
-knowledge = data[0:5]
+knowledge = data[0:3]
 # letters = {"text": '\u7684'}
+
+def get_new_word():
+	god.addWord(knowledge)
+	render_dictionary()
+	time.sleep(4)
 
 def render_dictionary():
 	god.getWord(knowledge)
 	noti = pygame.transform.scale(pygame.image.load(os.path.join("./","res.png")).convert_alpha(), (512, 512))
 	screen.blit(noti, (125, 100))
 	pygame.display.update()
+
+def end_screen():
+	pikalong = PikaLong(pikalong_images, longX, longY)
+	while True:
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				running = False # break the loop
+				QuitGame()
+			elif event.type == pygame.KEYDOWN:
+				if event.key == 27: # ESC press
+					QuitGame()
+				elif event.key == pygame.K_SPACE:
+					main()
+					break
+		screen.blit(background, (0, 0))
+		base = Base(floor)
+		base.render()
+		pikalong.render()
+		text = END_FONT.render("Press SPACE to restart!!!", True, (255, 0, 0))
+		screen.blit(text, (125, 300))
+		pygame.display.update()
+
 
 def main():
 	global HIGHEST_SCORE
@@ -187,34 +239,46 @@ def main():
 	DictRender = False
 	ninjas = [NinjaLead(lead_image, SCREEN_WIDTH, 400)]
 	polices = [Police(police_image, SCREEN_WIDTH, 400)]
+	Mr_Kiens = [ProfHanNom(MrKien_image, SCREEN_WIDTH, 425)]
 	threshold = 0.007
 	score = 0
 	lastTime = time.time()
 	pikalong = PikaLong(pikalong_images, longX, longY)
+	ans_pos = -1
 	base = Base(floor)
 	running = True
 
 	ts = time.time()
 	while running:
+		addword = False
 		if asking != None:
 			screen.blit(asking, (100, 100))
 			for event in pygame.event.get():
 				if event.type == pygame.QUIT:
 					running = False # break the loop
 					QuitGame()
-				if event.type == pygame.KEYDOWN:
+				elif event.type == pygame.KEYDOWN:
 					lost = False
 					print(event.key)
-					if event.key == 97:
+					if event.key == 27: # ESC press
+						QuitGame()
+					elif event.key == 120: # press X
+						render_dictionary()
+						time.sleep(2)
+						continue
+					elif event.key == ans_pos + 97:
 						text = GEN_FONT.render("Good Job!!!", 1, (0, 0, 255))
 					else:
-						text = GEN_FONT.render("Bad Luck!!!", 1, (255, 0, 0))
+						text = GEN_FONT.render("Game Over!!!", 1, (255, 0, 0))
 						lost = True
-					screen.blit(text, (300, 300))
+					screen.blit(text, (400, 300))
 					asking = None
+					pygame.display.update()
 					time.sleep(2)
 					if lost:
-						QuitGame()
+						end_screen()
+						return
+						# QuitGame()
 		else:
 			for event in pygame.event.get():
 				if event.type == pygame.QUIT:
@@ -231,7 +295,7 @@ def main():
 							DictRender = False
 						else:
 							pikalong.jump()
-					if event.key == 98:
+					if event.key == 120: # press X
 						if not DictOpen:
 							DictOpen = True
 							DictRender = False
@@ -256,7 +320,7 @@ def main():
 						if len(ninjas) == 0:
 							ninjas.append(NinjaLead(lead_image, SCREEN_WIDTH, 400))
 					if ninja.collide(pikalong) and asking is None:
-						asking = AskQuestion()
+						(asking, ans_pos) = AskQuestion()
 						ninja.finish = True
 				if len(ninjas) != 0:
 					if ninjas[-1].X < SCREEN_WIDTH // 2:
@@ -269,11 +333,23 @@ def main():
 					if police.finish:
 						polices.remove(police)
 					if police.collide(pikalong) and asking is None:
-						asking = AskQuestion()
+						(asking, ans_pos) = AskQuestion()
 						police.finish = True
 					
 				if len(polices) == 0:
 					polices.append(Police(police_image, SCREEN_WIDTH, 400))
+
+				for Mr_Kien in Mr_Kiens:
+					Mr_Kien.move()
+					if Mr_Kien.finish:
+						Mr_Kiens.remove(Mr_Kien)
+					if Mr_Kien.collide(pikalong):
+						# knowledge = get_new_word()
+						addword = True
+						Mr_Kien.finish = True
+				if len(Mr_Kiens) == 0:
+					Mr_Kiens.append(Police(MrKien_image, SCREEN_WIDTH, 400))
+
 
 				# render characters
 				screen.blit(highest_score_text, (525, 30))
@@ -285,10 +361,14 @@ def main():
 					ninja.render()
 				for police in polices:
 					police.render()
+				for Mr_Kien in Mr_Kiens:
+					Mr_Kien.render()
 			if DictOpen and not DictRender:
 				DictRender = True
 				render_dictionary()
 
+		if addword:
+			get_new_word()
 		pygame.display.update()	
 
 		# if DictOpen:
