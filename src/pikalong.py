@@ -187,15 +187,14 @@ def AskQuestion():
 	# screen.blit(question, (200, 200))
 	return (question, pos)
 	
-
 def QuitGame():
 	pygame.quit()
 	quit()
 
 data = god.data
 
+
 knowledge = data[0:3]
-# letters = {"text": '\u7684'}
 
 def get_new_word():
 	god.addWord(knowledge)
@@ -226,14 +225,17 @@ def end_screen():
 		base.render()
 		pikalong.render()
 		text = END_FONT.render("Press SPACE to restart!!!", True, (255, 0, 0))
+		highest_score_text = GEN_FONT.render("HIGHEST SCORE: " + str(HIGHEST_SCORE), 1, (0, 0, 255))
 		screen.blit(text, (125, 300))
+		screen.blit(highest_score_text, (525, 30))
 		pygame.display.update()
-
 
 def main():
 	global HIGHEST_SCORE
-
+	global knowledge
 	# reset
+	startIdx = random.randint(0, 200)
+	knowledge = data[startIdx: startIdx + 3]
 	asking = None
 	DictOpen = False
 	DictRender = False
@@ -262,6 +264,8 @@ def main():
 					print(event.key)
 					if event.key == 27: # ESC press
 						QuitGame()
+					elif event.key == pygame.K_SPACE:
+						continue
 					elif event.key == 120: # press X
 						render_dictionary()
 						time.sleep(2)
@@ -348,8 +352,7 @@ def main():
 						addword = True
 						Mr_Kien.finish = True
 				if len(Mr_Kiens) == 0:
-					Mr_Kiens.append(Police(MrKien_image, SCREEN_WIDTH, 400))
-
+					Mr_Kiens.append(Police(MrKien_image, SCREEN_WIDTH, 425))
 
 				# render characters
 				screen.blit(highest_score_text, (525, 30))
@@ -370,9 +373,6 @@ def main():
 		if addword:
 			get_new_word()
 		pygame.display.update()	
-
-		# if DictOpen:
-
 
 		# Minh's intelligence
 		while True:
